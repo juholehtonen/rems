@@ -104,7 +104,8 @@ jobs:
       - store_artifacts:
           path: target/uberjar/rems.jar
       - run: docker build --pull --tag rems .
-        # TODO: push the docker image to a repository
+      # TODO: actual docker repo url
+      - run: ./.circleci/docker-release.sh rems example.com/repo
 
   # pseudo job to post a single ok status to github after all the tests
   ok:
@@ -113,11 +114,15 @@ jobs:
       - image: alpine
     steps:
       - run: 'true'
+
 workflows:
   version: 2
   build-test-and-deploy:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /^v.*/
       - without-db:
           requires:
             - build
@@ -130,6 +135,9 @@ workflows:
       - war:
           requires:
             - build
+          filters:
+            tags:
+              only: /^v.*/
       - ok:
           requires:
             - build
